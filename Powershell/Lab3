@@ -1,0 +1,5 @@
+get-ciminstance win32_networkadapterconfiguration |
+where-object IPEnabled -eq true |
+where {$.Description -ne $null -or $.Index -ne $null -or $.IPAddress -ne $null -or $.IPSubnet -ne $null -or $.DNSDomain -ne $null -or $.DHCPServer -ne $null} |
+select Description,Index,IPAddress,IPSubnet,DNSDomain,DHCPServer |
+format-table Description,Index,IPAddress,IPSubnet,DNSDomain,DHCPServer
