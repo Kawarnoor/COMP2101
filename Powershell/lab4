@@ -1,0 +1,76 @@
+function ComputerSystem {
+	write-output "-----Starting of System hardware discription :-----"
+	$result = Get-CimInstance Win32_ComputerSystem | Format-List Description
+	$result
+}
+ComputerSystem 
+
+
+function OperatingSystem {
+	write-output "-----Starting of Operating System details :-----"
+	$result = Get-CimInstance Win32_OperatingSystem | Format-List Name,Version
+	$result
+}
+OperatingSystem
+
+
+function Processor {
+	write-output "-----Starting of Processor details :------"
+	$result = Get-CimInstance Win32_Processor | Format-List Description,MaxClockSpeed,NumberOfCores,L2CacheSize,L3CacheSize
+	$result
+}
+Processor
+
+
+
+function RAM {
+	write-output "-----Starting of RAM details :-----"
+	$physicalmemoryies = Get-CimInstance Win32_PhysicalMemory
+	$result = foreach($physicalmemory in $physicalmemoryies) {
+		New-Object -TypeName psobject -Property @{"Vendor"=$physicalmemory.Manufacturer
+							  Description=$physicalmemory.Description
+							  "Size(GB)"=$physicalmemory.Capacity / 1gb -as [int]
+							  "Bank"=$physicalmemory.BankLabel
+							  "Slot"=$physicalmemory.InterleavePosition
+							  }
+	}
+	$result | Format-Table
+}
+RAM	
+
+
+function PhysicalDisk {
+	write-output "-----Starting of Physical Disk details :-----"
+	$diskdrives = Get-CimInstance Win32_DiskDrive
+	foreach($disk in $diskdrives) {
+		$partitions = $disk | Get-CimAssociatedInstance -ResultClassName win32_diskpartition
+		foreach($partition in $partitions) {
+			$logicaldisks = $partition | Get-CimAssociatedInstance -ResultClassName win32_logicaldisk
+			foreach($logicaldisk in $logicaldisks) {
+				$result = New-Object -TypeName psobject -Property @{Manufacturer=$disk.Manufacturer
+									  Drive=$logicaldisk.deviceid
+									  Model=$disk.Model
+									  "Size(GB)"=$logicaldisk.size / 1gb -as [int]
+									  "Free Space(GB)"=$logicaldisk.FreeSpace / 1gb -as [int]
+									  "Free Percentage(%)"= ($logicaldisk.FreeSpace / $logicaldisk.size) * 100 -as [float]
+									}
+				$result | Format-Table
+			}
+		}
+	}
+}
+PhysicalDisk
+
+
+function VideoCard {
+	write-output "-----Starting of Video Card details :-----"
+	$videocards = Get-CimInstance Win32_VideoController
+	$result = foreach($videocard in $videocards) {
+		New-Object -TypeName psobject -Property @{"Vendor"=$videocard.AdapterCompatibility
+							  Description=$videocard.Description
+							  "Screen Resolution"=$videocard.VideoModeDescription
+							}
+	}
+	$result | Format-Table
+}
+VideoCard
